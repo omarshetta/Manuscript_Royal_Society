@@ -1,14 +1,10 @@
-This folder provides the demo for
- 1) Robust PCA on graphs: published in IEEE ICCV 2015
- 2) Fast Robust PCA on graphs: published in IEEE Journal of Selected Topics in Signal Processing 2016
+This folder provides the code and data for:
+Manuscript sent for review to Royal Society Open Science. "Robust Subspace Methods for Outlier Detection in Genomic Data Circumvents the Curse of Dimensionality".
  
   
- VERY IMPORTANT: PLEASE download and install the following two open source toolboxes. The code relies on these toolboxes
- 1. UNLOCBOX: https://lts2.epfl.ch/unlocbox/
- 2. GSPBOX: https://lts2.epfl.ch/gsp/
+ IMPORTANT: Please download and install the following toolbox:
+ 1. GSPBOX: https://lts2.epfl.ch/gsp/
  
-  The code provides a clustering demo for the 30 classes of ORL dataset. The dataset is provided in the folder
- The main file is 'demo_PCAG.m'. The code is well commented. 
- Do not forget to tune the parameters for both models for the best results.
+ Do not forget to tune the parameters for best results.
  
- contact: nauman.shahid@epfl.ch OR naumanshahid6@gmail.com for any queries or to report bugs.
+ contact: os10g13@soton.ac.uk for any queries or to report bugs.
