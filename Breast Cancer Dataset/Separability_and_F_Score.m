@@ -4,7 +4,7 @@ addpath('./fast_kmeans/');
 addpath('./gspbox/');
 gsp_start;
 
-[~,text2]=xlsread('breast_TCGA.xlsx');
+[~,text2]=xlsread('breast_TCGA.xlsx'); 
 load('text2.mat')
 id_sequed=text2(1,2:end);
 load('breast_TCGA.mat');
