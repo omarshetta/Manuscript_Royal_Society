@@ -33,10 +33,7 @@ load('breast_TCGA.mat');
  
  
 load('ind_mat1')
- 
- 
- 
- i_pos=300:399;
+load('i_pos')
 
 %% Mahalanobis distance for outlier detection (like fitting gaussian )
 Pos=101:105;
