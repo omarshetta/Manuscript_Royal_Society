@@ -31,7 +31,7 @@ load('breast_TCGA.mat');
 %% 
 
 load('i_pos')
-load('ind_mat1')
+load('ind_outliers')
 perf_OPG=zeros(30,2);
 perf_PCA=zeros(30,2);
 perf_tsne=zeros(30,2);
@@ -171,4 +171,88 @@ ylabel('F-score')
 grid on
 
 
+
+%% Visulization 
+j=10;
+X_tst=[ X(:,ind_pos(i_pos)) , X(:,ind_neg(ind_mat1(j,:))) ];
+
+%%% retain highest varaince genes
+v=var(X_tst,0,2);
+[b,ib]=sort(v,'descend');
+diff_genes=ib(1:2000); 
+X_ts=X_tst(diff_genes,:); 
+qq_var=quantilenorm(X_ts);
+
+param_graph.use_flann = 0;
+param_graph.k = 5; 
+param_graph.type='knn';
+
+
+Pos=101:105;
+
+G = gsp_nn_graph(qq_var',param_graph);
+w=full(G.W);
+d=sum(w,2);
+D=diag(d);
+Lap_graph=D-w;
+
+%%% OP
+ [L_hat,C_hat,cnt] = OUTLIER_PERSUIT(qq_var,0.40);
+[U,~,~]=svd(L_hat);
+z_OP=U(:,1:2)'*qq_var;
+figure (35)
+plot(z_OP(1,1:100),z_OP(2,1:100),'ko')
+hold on 
+plot(z_OP(1,Pos),z_OP(2,Pos),'kd')
+title('Outlier Pursuit')
+xlabel('PC1')
+ylabel('PC2')
+legend('ER+','ER-')
+
+%%% GOP
+[L_hat2,C_hat2,obj]=admm_algo_OP_on_graphs(qq_var,0.84,1,Lap_graph);
+r2=rank(L_hat2);
+[U2,S2,V2]=svd(L_hat2);
+Z_OPG=U2(:,1:r2)'*L_hat2;
+figure (36)
+plot(Z_OPG(1,1:99),Z_OPG(2,1:99),'ko')
+hold on 
+plot(Z_OPG(1,Pos),Z_OPG(2,Pos),'kd')
+title('GOP')
+xlabel('PC1')
+ylabel('PC2')
+legend('ER+','ER-')
+c_norms_GOP=sqrt(sum(C_hat2.^2));
+figure(101)
+plot(c_norms_GOP,'bo')
+hold on 
+plot(Pos,c_norms_GOP(Pos),'ro')
+
+
+
+%%% T-sne
+figure (37)
+y=tsne(qq_var');
+plot(y(1:100,1),y(1:100,2),'ko')
+hold on 
+plot(y(101:105,1),y(101:105,2),'kd')
+title('t-SNE')
+legend('ER+','ER-')
+
+
+%%%PCA
+qq_var_cent=zeros(size(qq_var,1),size(qq_var,2));
+for i=1:size(qq_var,1)
+qq_var_cent(i,:)=qq_var(i,:)-mean(qq_var(i,:));    
+end
+[U,~,~]=svd(qq_var_cent);
+z=U(:,1:r2)'*qq_var_cent;
+figure (38)
+plot(z(1,1:99),z(2,1:99),'ko')
+hold on 
+plot(z(1,Pos),z(2,Pos),'kd')
+title('PCA')
+xlabel('PC1')
+ylabel('PC2')
+legend('ER+','ER-')
 
