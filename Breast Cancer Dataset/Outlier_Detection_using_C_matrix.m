@@ -4,8 +4,6 @@ addpath('./fast_kmeans/');
 addpath('./gspbox/');
 gsp_start;
 
-
-
 [~,text2]=xlsread('breast_TCGA.xlsx');
 load('text2.mat')
 id_sequed=text2(1,2:end);
@@ -34,7 +32,7 @@ load('breast_TCGA.mat');
 load('ind_mat1')
 load('i_pos')
 
-%% Mahalanobis distance for outlier detection (like fitting gaussian )
+%% Mahalanobis distance for outlier detection (same as fitting gaussian )
 Pos=101:105;
 mahal=zeros(105,30);
 num_dim=[25,50,75,80,95,100,103,200,1000];
@@ -48,7 +46,7 @@ for j=1:30
 X_tst=[ X(:,ind_pos(i_pos)) , X(:,ind_neg(ind_mat1(j,:))) ]; %% X_tst is the same matrix  as D_tot
 
 
-%%% most varable gnees in test set
+%%% most variable genes 
 v=var(X_tst,0,2);
 [b,ib]=sort(v,'descend');
  diff_genes=ib(1:num_dim(k));
@@ -56,19 +54,18 @@ v=var(X_tst,0,2);
  X_ts=X_tst(diff_genes,:);
 
  mu=mean(X_ts,2);
-%  r(j,k)=rank(X_ts);
 C=cov(X_ts');
-C1=C+(1e-9)*eye(numel(diff_genes),numel(diff_genes)); % need to slighlty regularize the covaraince matrix to overcome small numerical artefacts
+C1=C+(1e-9)*eye(numel(diff_genes),numel(diff_genes)); % need to regularize the covaraince matrix to overcome small numerical artefacts
 invC1=inv(C1);
 for i=1:105
     y=X_ts(:,i)-mu;
-       mahal(i,j)=sqrt(y'*invC1*y);
+    mahal(i,j)=sqrt(y'*invC1*y);
 end
 
 [c,ic]=sort(mahal(:,j),'descend');
-    h=find(c==min(mahal(Pos,j)));
-    FP_mahal_test(j,k)=length(setdiff(ic(1:h),Pos));
-    disp([j,num_dim(k)])
+h=find(c==min(mahal(Pos,j)));
+FP_mahal_test(j,k)=length(setdiff(ic(1:h),Pos));
+disp([j,num_dim(k)])
 end
 end
 time=toc;
@@ -78,7 +75,7 @@ str=string(num_dim);
 boxplot(FP_mahal_test,'label',str)
 
 
-%% OP and GOP choosing most varaible genes only on test set
+%% OP and GOP choosing most variable genes
 
 index=1:30;
 num_genes=[25,50,80,95,100,200];

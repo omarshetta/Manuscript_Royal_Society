@@ -13,10 +13,7 @@ for i=1:max(unique(true_labs))
 p(i)= length(find(true_labs==i));
 end
 
- k=6;
 load('ii_mat2.mat')
-s_grpca=zeros(59+k,30);
-s_op=zeros(59+k,30);
 r_opg=zeros(30,1);
 r_op=zeros(30,1);
 perf_OPG=zeros(30,2);
@@ -55,8 +52,7 @@ G1 = gsp_nn_graph(M,param_graph);
 
 %%% OPG 
 [L,C,obj]=admm_algo_OP_on_graphs(M',1.6,2,full(G1.L)); % 1.5 ,5 
-[U,S,~]=svd(L);
-s_grpca(:,j)=diag(S);
+[U,~,~]=svd(L);
 r_opg(j)=rank(L);
 Z=U(:,1:r_opg(j))'*L;
 [ cent_Z, pred_Z, ~,~,~ ] = kmeans_fast(Z',2,2,0);
@@ -85,8 +81,7 @@ perf_PCA(j,:)=[T_PCA,F_PCA];
 %%% Outlier pursuit
 [L_hat,C_hat]=OUTLIER_PERSUIT(M',0.74);
 r_op(j)=rank(L_hat);
-[U,S,V]=svd(L_hat);
-s_op(:,j)=diag(S);
+[U,~,~]=svd(L_hat);
 Z_op=U(:,1:r_op(j))'*M';
 [ cent_Zop, pred_Zop, ~,~,~ ] = kmeans_fast(Z_op',2,2,0);
 out_Zop=find(pred_Zop==2);

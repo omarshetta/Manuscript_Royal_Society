@@ -75,7 +75,7 @@ Lap_graph=D-w;
 
 [L_hat2,C_hat2,obj]=admm_algo_OP_on_graphs(qq_var,0.84,1,Lap_graph);% lambda_vec(25)
 r2(j)=rank(L_hat2);
-[U2,S2,V2]=svd(L_hat2);
+[U2,~,~]=svd(L_hat2);
 
 Z_OPG=U2(:,1:r2(j))'*L_hat2;
 [ cent_OPG, predOPG1, ~,~,~ ] = kmeans_fast(Z_OPG' ,2,2,0);
