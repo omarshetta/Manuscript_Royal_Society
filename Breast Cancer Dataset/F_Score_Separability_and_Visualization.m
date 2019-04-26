@@ -4,11 +4,11 @@ addpath('./fast_kmeans/');
 addpath('./gspbox/');
 gsp_start;
 
-[~,text2]=xlsread('breast_TCGA.xlsx'); 
+[~,text2]=xlsread('breast_TCGA.xlsx');% need to download from TCGA repository and convert to excel spreadsheet 
 load('text2.mat')
 id_sequed=text2(1,2:end);
 load('breast_TCGA.mat');
-[num_clinical,t_clin]=xlsread('BRCA_clinical.xlsx');% need to download from TCGA repository and convert to excel spreadsheet
+[num_clinical,t_clin]=xlsread('BRCA_clinical.xlsx');
  patient_ids=t_clin(:,1);
  ii=find(strcmp(t_clin(1,:),'ER_Status_nature2012'));
  i_posi=find(strcmp(t_clin(:,8),'Positive')); %% index of ER postive patients 
