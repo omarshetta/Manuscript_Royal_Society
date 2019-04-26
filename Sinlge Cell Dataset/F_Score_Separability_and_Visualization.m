@@ -2,6 +2,7 @@ close all
 clear all
 clc
 addpath('./gspbox/');
+addpath('./fast_kmeans')
 
 gsp_start;
 
