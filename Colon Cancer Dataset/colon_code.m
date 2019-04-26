@@ -1,4 +1,4 @@
-%% Preparing data and adding relvant paths. Need to download GSPBOX first.
+%% Preparing data and adding relvant paths.
 clear all
 addpath('./fast_kmeans/');
 addpath('./gspbox/');
