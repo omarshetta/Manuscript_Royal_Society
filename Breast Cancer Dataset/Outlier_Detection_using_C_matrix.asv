@@ -3,10 +3,10 @@ clear all
 addpath('./gspbox/');
 gsp_start;
 
- [breast_TCGA,text2]=xlsread('breast_TCGA.xlsx');
-% load('breast_TCGA.mat')
-% load('TCGA_text.mat')
-id_sequed=TCGA_text(1,2:end);
+% [~,text2]=xlsread('breast_TCGA.xlsx');
+load('breast_TCGA.mat')
+load('.mat')
+id_sequed=text(1,2:end);
 
 [num_clinical,t_clin]=xlsread('BRCA_clinical.xlsx');
 
