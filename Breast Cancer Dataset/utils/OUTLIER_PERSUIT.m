@@ -1,4 +1,18 @@
 function [L_hat,C_hat,cnt] = OUTLIER_PERSUIT(M,lambda)
+%%%%%%%%%%%%
+%%% This function implements 'Outlier Pursuit (OP)' algorithm. 
+%%% It is minimizing ||L||_{*} + lambda ||C||_{1,2} subject to M=L+C with respect to L and C.
+%%% Inputs:
+%%% X, is data matrix with dimesnion (m x n) m is the number of features and n is the number of samples, 
+%%% lambda, is a regularization parameters.
+%%%
+%%% Outputs: 
+%%% L_hat, is the low rank matrix at the last iteration. 
+%%% C_hat, is the column sparse matrix at the last iteration.
+%%% cnt, is an integer variable that counts the number of iterations. 
+%%%%%%%%%%%%
+
+
 [m,n]=size(M);
  delta=10e-5;
 % delta=0.00001;

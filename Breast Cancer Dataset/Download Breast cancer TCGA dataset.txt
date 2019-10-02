@@ -1,0 +1,4 @@
+For the breast Cancer dataset download from Xena browser BRCA cohort. Using the following link:
+https://xenabrowser.net/datapages/?dataset=TCGA.BRCA.sampleMap/HiSeqV2_PANCAN&host=https://tcga.xenahubs.net
+Use the first download link: https://tcga.xenahubs.net/download/TCGA.BRCA.sampleMap/HiSeqV2_PANCAN.gz
+Download then convert to excel spreadsheet.
