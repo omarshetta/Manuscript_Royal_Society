@@ -47,7 +47,6 @@ iii2 = find(true_labs==1);
 %%% Constructing dataset with 6 G2M cells and 59 G1 cells
 idx = [iii2;iii];
 X = in_X(idx,:);
-labs = true_labs(idx);
 %%%
 %%% Retain most variable genes across samples
 v = var(X);
