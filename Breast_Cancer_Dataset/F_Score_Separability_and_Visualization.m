@@ -1,18 +1,22 @@
-%%% This code uses GSPBOX for graph construction. PLEASE DO NOT FORGET to download GSPBOX! as described in the READ_ME file.
+%%% This code uses GSPBOX for graph construction. PLEASE DO NOT FORGET to download GSPBOX! as described in the READ_ME file in parent directory.
 
 %%% Download breast cancer TCGA dataset from Xena browser following
 %%% instructions in 'Download Breast cancer TCGA dataset.txt' file. Download file then convert to
 %%% excel and rename as 'BRCA_TCGA.xlsx'
+clc
 clear all
+disp(['Loading Breast Cancer Dataset...'])
 [breast_TCGA,text2] = xlsread('BRCA_TCGA.xlsx');% need to download from TCGA repository and convert to excel spreadsheet 
 id_sequed = text2(1,2:end);
 
 
 % Initialize gspbox library and add path for functions used in this script
+cd ..
 addpath('./fast_kmeans/');
 addpath('./utils')
 addpath('./gspbox/');
 gsp_start;
+cd Breast_Cancer_Dataset
 
 % Load BRCA clinical data, find ER+ and ER- patients 
 [num_clinical,t_clin] = xlsread('BRCA_clinical.xlsx');
@@ -37,35 +41,35 @@ neg_patients = patient_ids(i_neg);
 
 %% Compare GOP, OP, PCA and t-SNE F-score and separability
 
-load('i_pos')
-load('ind_outliers')
-perf_GOP = zeros(30,2);
-perf_PCA = zeros(30,2);
-perf_tsne = zeros(30,2);
-perf_OP = zeros(30,2);
-r2 = zeros(30,1);
-r_OP = zeros(1,30);
-separ_GOP = zeros(30,1);
-separ_PCA = zeros(30,1);
-separ_OP = zeros(30,1);
+load('i_pos') % index of 100 ER+ samples in the total of 600 ER+.
+load('ind_outliers') % indexes of 5 ER- samples in the total of 179 ER-.   
+perf_GOP   = zeros(30,2);
+perf_PCA   = zeros(30,2);
+perf_tsne  = zeros(30,2);
+perf_OP    = zeros(30,2);
+r2         = zeros(30,1);
+r_OP       = zeros(1,30);
+separ_GOP  = zeros(30,1);
+separ_PCA  = zeros(30,1);
+separ_OP   = zeros(30,1);
 separ_tsne = zeros(30,1);
 
-F_PCA = zeros(30,1);
-F_GOP = zeros(30,1);
+F_PCA  = zeros(30,1);
+F_GOP  = zeros(30,1);
 F_tsne = zeros(30,1);
-F_OP = zeros(30,1);
+F_OP   = zeros(30,1);
 
 Pos = 101:105;
 
 for j = 1:30
 
-X_tst = [ X(:,ind_pos(i_pos)) , X(:,ind_neg(ind_mat1(j,:))) ];
+X_tst = [ X(:,ind_pos(i_pos)) , X(:,ind_neg(ind_mat1(j,:))) ]; % constructiong 100 ER+ and 5 ER- dataset.
 
 %%% Filter dataset to 2000 most variable genes
-v = var(X_tst,0,2);
-[b,ib] = sort(v,'descend');
+v          = var(X_tst,0,2);
+[b,ib]     = sort(v,'descend');
 diff_genes = ib(1:2000); 
-X_ts = X_tst(diff_genes,:); 
+X_ts       = X_tst(diff_genes,:); 
 
 
 %Quantile normalize dataset
@@ -210,13 +214,13 @@ title('F score Breast Cancer Dataset')
 %% Visualization of GOP, OP, PCA and t-SNE.
 
 j = 10;
-X_tst = [ X(:,ind_pos(i_pos)) , X(:,ind_neg(ind_mat1(j,:))) ];
+X_tst = [ X(:,ind_pos(i_pos)) , X(:,ind_neg(ind_mat1(j,:))) ]; % constructiong 100 ER+ and 5 ER- dataset.
 
 %%% Retain 200 most variable genes
-v = var(X_tst,0,2);
-[b,ib] = sort(v,'descend');
+v          = var(X_tst,0,2);
+[b,ib]     = sort(v,'descend');
 diff_genes = ib(1:2000); 
-X_ts = X_tst(diff_genes,:);
+X_ts       = X_tst(diff_genes,:);
 
 qq_var = quantilenorm(X_ts);% Quantile normalize
 

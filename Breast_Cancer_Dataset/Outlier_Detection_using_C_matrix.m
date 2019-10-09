@@ -1,16 +1,20 @@
-%%% This code uses GSPBOX for graph construction. PLEASE DO NOT FORGET to download GSPBOX! as described in the READ_ME file.
+%%% This code uses GSPBOX for graph construction. PLEASE DO NOT FORGET to download GSPBOX! as described in the READ_ME file in parent directory.
 
 %%% Download breast cancer TCGA dataset from Xena browser following
 %%% instructions in 'Download Breast cancer TCGA dataset.txt' file. Download file then convert to
 %%% excel and rename as 'BRCA_TCGA.xlsx'
+clc
 clear all
+disp(['Loading Breast Cancer Dataset...'])
 [breast_TCGA,text] = xlsread('BRCA_TCGA.xlsx'); % load dataset
 id_sequed = text(1,2:end);
 
 % Initialize gspbox library and add path for functions used in this script
+cd ..
 addpath('./gspbox/');
 addpath('./utils')
 gsp_start;
+cd Breast_Cancer_Dataset
 
 % Load BRCA clinical data, find ER+ and ER- patients 
 [~,t_clin] = xlsread('BRCA_clinical.xlsx'); 
@@ -33,36 +37,36 @@ end
 X = breast_TCGA;
 
 
-load('ind_mat1')
-load('i_pos')
+load('ind_outliers') % indexes of 5 ER- samples in the total of 179 ER-.   
+load('i_pos') % index of 100 ER+ samples in the total of 600 ER+.
 
 % Initialize number of dimensions to be used in experiment
 num_dim = [25,50,80,95,100,200];
 
 %% Mahalanobis distance for outlier detection (same as fitting a Gaussian density) 
-Pos = 101:105;
-mahal = zeros(105,30);
+Pos           = 101:105;
+mahal         = zeros(105,30);
 FP_mahal_test = zeros(30,numel(num_dim));
 
 for k = 1:numel(num_dim)
     
     for j = 1:30
         
-        X_tst = [ X(:,ind_pos(i_pos)) , X(:,ind_neg(ind_mat1(j,:))) ];
+        X_tst = [ X(:,ind_pos(i_pos)) , X(:,ind_neg(ind_mat1(j,:))) ]; % constructiong 100 ER+ and 5 ER- dataset.
 
         %%% filter dataset to most varaible genes
-        v = var(X_tst,0,2);
-        [b,ib] = sort(v,'descend');
+        v          = var(X_tst,0,2);
+        [b,ib]     = sort(v,'descend');
         diff_genes = ib(1:num_dim(k));
-        X_ts = X_tst(diff_genes,:);
+        X_ts       = X_tst(diff_genes,:);
         
         % Find mean vector and inverse covariance matrix to calculate Mahalanobis distance
-        mu = mean(X_ts,2);
-        C = cov(X_ts');
-        C1 = C+(1e-9)*eye(numel(diff_genes),numel(diff_genes)); % Need to regularize the covariance matrix to overcome small numerical artefacts
+        mu    = mean(X_ts,2);
+        C     = cov(X_ts');
+        C1    = C+(1e-9)*eye(numel(diff_genes),numel(diff_genes)); % Need to regularize the covariance matrix to overcome small numerical artefacts
         invC1 = inv(C1);
         
-        for i = 1:105
+        for i = 1:size(X_ts,2)
             y = X_ts(:,i)-mu;
             mahal(i,j) = sqrt(y'*invC1*y);
         end
@@ -79,23 +83,23 @@ end
 
 
 %% OP and GOP choosing most variable genes
-n = numel(num_dim);
-Pos = 101:105;
-r_opg = zeros(30,n);
-rop = zeros(30,n);
+n           = numel(num_dim);
+Pos         = 101:105;
+r_opg       = zeros(30,n);
+rop         = zeros(30,n);
 FP_OPG_test = zeros(30,n);
-FP_OP_test = zeros(30,n);
+FP_OP_test  = zeros(30,n);
 
  for k = 1:n
 
     for j = 1:30
-        X_tst = [ X(:,ind_pos(i_pos)) , X(:,ind_neg(ind_mat1(j,:))) ];
+        X_tst = [ X(:,ind_pos(i_pos)) , X(:,ind_neg(ind_mat1(j,:))) ]; % constructiong 100 ER+ and 5 ER- dataset.
         %%% retain highest varaince genes across samples
-        v = var(X_tst,0,2);
-        [vv,iv] = sort(v,'descend');
+        v          = var(X_tst,0,2);
+        [vv,iv]    = sort(v,'descend');
         diff_genes = iv(1:num_dim(k));
-        X_ts = X_tst(diff_genes,:);
-        M = quantilenorm(X_ts);
+        X_ts       = X_tst(diff_genes,:);
+        M          = quantilenorm(X_ts);
         
         % Set k-Nearest Neighbour graph parameters. Check GSPBOX documentation for more details
         param_graph.use_flann = 0; % to use the fast C++ library for construction of huge graphs.
@@ -145,12 +149,12 @@ FP_MAD_test = zeros(30,1);
 k = 6;
 
 for j = 1:30
-    X_tst = [ X(:,ind_pos(i_pos)) , X(:,ind_neg(ind_mat1(j,:))) ]; %% X_tst is the same matrix  as D_tot   
+    X_tst = [ X(:,ind_pos(i_pos)) , X(:,ind_neg(ind_mat1(j,:))) ]; % constructiong 100 ER+ and 5 ER- dataset.
     %%% retain highest varaince genes across samples
-    v = var(X_tst,0,2);
-    [b,ib] = sort(v,'descend');
+    v          = var(X_tst,0,2);
+    [b,ib]     = sort(v,'descend');
     diff_genes = ib(1:num_dim(k)); 
-    X_ts = X_tst(diff_genes,:); 
+    X_ts       = X_tst(diff_genes,:); 
  
     for i = 1:105
        MAD(i,j) = mad(X_ts(:,i),1);
@@ -177,14 +181,12 @@ FP_Box = zeros(30,4);
 
 for k = 6:8
     for j = 1:30
-    X_tst = [ X(:,ind_pos(i_pos)) , X(:,ind_neg(ind_mat1(j,:))) ]; %% X_tst is the same matrix  as D_tot   
-
-
+    X_tst = [ X(:,ind_pos(i_pos)) , X(:,ind_neg(ind_mat1(j,:))) ]; % constructiong 100 ER+ and 5 ER- dataset.
     %%% Retain highest varaince genes across samples
-    v = var(X_tst,0,2);
-    [b,ib] = sort(v,'descend');
+    v          = var(X_tst,0,2);
+    [b,ib]     = sort(v,'descend');
     diff_genes = ib(1:num_dim(k)); 
-    X_ts = X_tst(diff_genes,:); 
+    X_ts       = X_tst(diff_genes,:); 
  
         for i = 1:105
             outliers = outliers_boxplot(X_ts(:,i)); 

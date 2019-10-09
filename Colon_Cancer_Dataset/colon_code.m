@@ -1,12 +1,14 @@
-%%% This code uses GSPBOX for graph construction. PLEASE DO NOT FORGET to download GSPBOX! as described in the READ_ME file.
+%%% This code uses GSPBOX for graph construction. PLEASE DO NOT FORGET to download GSPBOX! as described in the READ_ME file in parent directory.
 
 %% Preparing data and adding relevant paths.
 clc
 % Initialize gspbox library and add path for functions used in this script
 clear all
+cd ..
 addpath('./fast_kmeans/');
 addpath('./gspbox/');
 addpath('./utils')
+cd Colon_Cancer_Dataset
 gsp_start;
 
 % Load colon cancer data. Use only tumor samples.
@@ -14,15 +16,15 @@ load('colon.mat')
 load('tissues.mat')
 clearvars -except colon tissues 
 ind_cancer = find(tissues<0);
-T = colon(:,ind_cancer);
+T          = colon(:,ind_cancer);
 T_outliers = [2,30,33,36,37];
 
 % Retaining 700 most variable genes
-[v,idx] = sort(var(T,0,2),'descend');
+[v,idx]  = sort(var(T,0,2),'descend');
 features = idx(1:700);                                                                                       
-M = T(features,:);
+M        = T(features,:);
 
-M_new = quantilenorm(M,'display',0); % Quantile normalize
+M_new    = quantilenorm(M,'display',0); % Quantile normalize
 %% Tuning lambda for OP. Using grid search method
 
 n=50;
@@ -105,11 +107,11 @@ Lap_graph = diag(d)-w;
 
 %% Tune lambda for GOP. Using grid search method
 
-n = 25;
-lambda_vec = linspace(0.1,3,n);
+n                   = 25;
+lambda_vec          = linspace(0.1,3,n);
 predicted_labels_gr = zeros(40,n);
-index_outliers_gr = zeros(40,n);
-num_outliers_gr = zeros(1,n);
+index_outliers_gr   = zeros(40,n);
+num_outliers_gr     = zeros(1,n);
 
 for i = 1:n
 [L_hat2, C_hat2, obj] = admm_algo_OP_on_graphs(M_new, lambda_vec(i), 1, Lap_graph);% GOP algorithm
@@ -139,11 +141,11 @@ ylabel('number of outliers')
 title(' the number on each circle is the rank of recovered L at that specific \lambda')
 
 %% Robustness of GOP to parameter gamma with optimal lambda
-n = 30;
-gamma_vec = linspace(0.5,10,n);
+n                 = 30;
+gamma_vec         = linspace(0.5,10,n);
 predicted_labels2 = zeros(40,n);
-index_outliers2 = zeros(40,n);
-num_outliers2 = zeros(1,n);
+index_outliers2   = zeros(40,n);
+num_outliers2     = zeros(1,n);
 
 for i = 1:n
 [L_hat2, C_hat2, obj] = admm_algo_OP_on_graphs(M_new, 1.1875, gamma_vec(i), Lap_graph); % 1.1875 is optimal lambda

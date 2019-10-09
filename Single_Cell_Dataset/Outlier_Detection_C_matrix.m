@@ -1,13 +1,16 @@
-%%% This code uses GSPBOX for graph construction. DO NOT FORGET to download GSPBOX! as described in the READ_ME file.
+%%% This code uses GSPBOX for graph construction. DO NOT FORGET to download GSPBOX! as described in the READ_ME file in parent directory.
 
 
 % Initialize gspbox library and add path for functions used in this script
+clc
 clear all
+cd ..
 addpath('./gspbox/');
 addpath('./utils')
 gsp_start;
-
+cd Single_Cell_Dataset
 % Load single cell dataset
+disp(['Loading Single Cell Data... '])
 load('Test_1_mECS.mat')
 X = in_X;
 
@@ -15,43 +18,41 @@ for i = 1:max(unique(true_labs))
 p(i) = length(find(true_labs==i));
 end
 
-load('ii_mat2.mat')
+load('ind_outliers.mat') % load indexes of the 6 sampled G2M cells for all 30 datasets.
 
 %% Mahalanobis distance for outlier detection (same as fitting a Gaussian density) 
 
 num_genes = [2,20,30,50,60,70];
-FP_mahal = zeros(30,numel(num_genes));
-mahal = zeros(65,30);
-Pos = 60:65;
+FP_mahal  = zeros(30,numel(num_genes));
+mahal     = zeros(65,30); 
+Pos       = 60:65; % index of 6 outlier samples in constructed dataset
 
 for k = 1:numel(num_genes)
     
     for j = 1:30
         
-        %%% Sampling 6 cells from G2M population
-        ind = find(true_labs==3);
-        iii = ind(ii_mat(j,:));
-        iii2 = find(true_labs==1);
-        %%%
         %%% Constructing dataset with 6 G2M cells and 59 G1 cells
-        idx = [iii2;iii];
-        X = in_X(idx,:);
-        Xt = X';
+        ind_G2M   = find(true_labs==3);
+        ind_G2M_6 = ind_G2M(ii_mat(j,:));
+        ind_G1    = find(true_labs==1);
+        idx       = [ind_G1;ind_G2M_6]; % first 59 cells are the G1 cells and the last 6 cells are chosen from G2M.
+        X         = in_X(idx,:);
         %%%
         %%% Retain most varaible genes across samples
-        v = var(X);
-        [b,ib] = sort(v,'descend');
+        v          = var(X);
+        [b,ib]     = sort(v,'descend');
         diff_genes = ib(1:num_genes(k));
-        X_ts = Xt(diff_genes,:);
+        X_ts       = X(:,diff_genes);
         %%%
  
         % Find mean vector and inverse covariance matrix to calculate Mahalanobis distance
-        mu = mean(X_ts,2);
-        C = cov(X_ts');
-        C1 = C+(1e-10)*eye(numel(diff_genes),numel(diff_genes)); % need to regularize the covaraince matrix to overcome small numerical artefacts
+        mu    = mean(X_ts);
+        C     = cov(X_ts);
+        C1    = C+(1e-10)*eye(numel(diff_genes),numel(diff_genes)); % need to regularize the covaraince matrix to overcome small numerical artefacts
         invC1 = inv(C1);
-        for i = 1:65
-            y = X_ts(:,i)-mu;
+        
+        for i = 1:size(X_ts,1)
+            y = X_ts(i,:)'-mu';
             mahal(i,j) = sqrt(y'*invC1*y);
         end
         
@@ -65,34 +66,29 @@ for k = 1:numel(num_genes)
 end
 
 
-
 %% OP and GOP (59G1 and 6G2M) detecting percentage of False positives to detect all known outliers for different dimensions.
 
 num_genes = [2,20,30,50,60,70];
-FP_c_OPG = zeros(30,numel(num_genes));
-FP_OP = zeros(30,numel(num_genes));
-r_OPG = zeros(30,numel(num_genes));
-rop = zeros(30,numel(num_genes));
-
-Pos = 60:65;
+FP_c_OPG  = zeros(30,numel(num_genes));
+FP_OP     = zeros(30,numel(num_genes));
+r_OPG     = zeros(30,numel(num_genes));
+rop       = zeros(30,numel(num_genes));
+Pos       = 60:65;
 
 for k = 1:numel(num_genes)
+    
     for j = 1:30
-        %%% Sampling 6 cells from G2M population
-        ind = find(true_labs==3);
-        iii = ind(ii_mat(j,:));
-        iii2 = find(true_labs==1);
-        %%%
         %%% Constructing dataset with 6 G2M cells and 59 G1 cells
-        idx = [iii2;iii];
-        X = in_X(idx,:);
-        %%%
+        ind_G1    = find(true_labs==3);
+        ind_G2M_6 = ind_G1(ii_mat(j,:));
+        ind_G1    = find(true_labs==1);
+        idx       = [ind_G1;ind_G2M_6];
+        X         = in_X(idx,:);
         %%% Retain most variable genes across samples
-        v = var(X);
-        [b,ib] = sort(v,'descend');
+        v          = var(X);
+        [b,ib]     = sort(v,'descend');
         diff_genes = ib(1:num_genes(k));
-        Xt = X';
-        X_ts = Xt(diff_genes,:);
+        X_ts       = X(:,diff_genes);
         %%%
         
         % Initialize k-Nearest Neighbour graph using gspbox functions
@@ -102,7 +98,7 @@ for k = 1:numel(num_genes)
 
       
         % Find W (square and symmetric similarity matrix) and find Laplacian matrix
-        [G,sigma2] = gsp_nn_graph(X_ts',param_graph);
+        [G,sigma2] = gsp_nn_graph(X_ts,param_graph);
         w = full(G.W);
         d = sum(w,2);
         D = diag(d);
@@ -114,7 +110,7 @@ for k = 1:numel(num_genes)
             lambda_opg = 0.70;            
         end
             
-        [L, C, obj] = admm_algo_OP_on_graphs(X_ts, lambda_opg, 1, Lap_graph); % GOP algorithm
+        [L, C, obj] = admm_algo_OP_on_graphs(X_ts', lambda_opg, 1, Lap_graph); % GOP algorithm
         r_OPG(j,k) = rank(L);
         % Find number of false positives before detecting all known outliers
         c_OPG = sqrt(sum(C.^2));
@@ -129,7 +125,7 @@ for k = 1:numel(num_genes)
             lambda_op = 0.3;
         end
         
-        [L_hat, C_hat] = OUTLIER_PERSUIT(X_ts, lambda_op);% OP algorithm
+        [L_hat, C_hat] = OUTLIER_PERSUIT(X_ts', lambda_op);% OP algorithm
         rop(j,k) = rank(L_hat);
         c_OP = sqrt(sum(C_hat.^2));
         
@@ -137,39 +133,36 @@ for k = 1:numel(num_genes)
         [c, ic] = sort(c_OP,'descend');
         h= find(c==min(c_OP(Pos)));
         FP_OP(j,k) = length(setdiff(ic(1:h),Pos));
-
-
     end
+    
 end
  %% MAD outlier detection method on 70 most variable genes
 
-Pos = 60:65;
-MAD = zeros(65,30);
-num_genes = [2,20,30,50,60,70];
+
+MAD         = zeros(65,30);
+num_genes   = [2,20,30,50,60,70];
 FP_MAD_test = zeros(30,1);
-k = 6;
+Pos         = 60:65;
+k           = 6;
  
 for j = 1:30
     
-    %%% Sampling 6 cells from G2M population
-    ind = find(true_labs==3);
-    iii = ind(ii_mat(j,:));
-    iii2 = find(true_labs==1);
-    %%%
     %%% Constructing dataset with 6 G2M cells and 59 G1 cells
-    idx = [iii2;iii];
-    X = in_X(idx,:);
+    ind_G1    = find(true_labs==3);
+    ind_G2M_6 = ind_G1(ii_mat(j,:));
+    ind_G1    = find(true_labs==1);
+    idx       = [ind_G1;ind_G2M_6];
+    X         = in_X(idx,:);
     %%%
     %%% Retain most variable genes across samples
-    v = var(X);
-    [b,ib] = sort(v,'descend');
+    v          = var(X);
+    [b,ib]     = sort(v,'descend');
     diff_genes = ib(1:num_genes(k));
-    Xt = X';
-    X_ts = Xt(diff_genes,:); 
+    X_ts       = X(:,diff_genes); 
     %%% 
     
-        for i = 1:65
-            MAD(i,j) = mad(X_ts(:,i),1);
+        for i = 1:size(X_ts,1)
+            MAD(i,j) = mad(X_ts(i,:),1);
         end
         
     % Find number of false positives before detecting all known outliers
@@ -185,33 +178,29 @@ end
 %% Boxplot method on 70, 400 and 1000 most variable genes. 
 %%% outlyingness score is number of outliers.
 
-Pos = 60:65;
-num_genes = [2,20,30,50,60,70,400,1000];
 
-Num_out = zeros(65,30);
-FP_Box = zeros(30,4);
+num_genes = [2,20,30,50,60,70,400,1000];
+Num_out   = zeros(65,30);
+FP_Box    = zeros(30,4);
+Pos       = 60:65;
 
 for k = 6:8
     for j = 1:30
-    %%% Sampling 6 cells from G2M population    
-    ind = find(true_labs==3);
-    iii = ind(ii_mat(j,:));
-    iii2 = find(true_labs==1);
-    %%%
-    %%% Constructing dataset with 6 G2M cells and 59 G1 cells
-    idx = [iii2;iii];
-    X = in_X(idx,:);
-    %%%
+    %%% Constructing dataset with 6 G2M cells and 59 G1 cells    
+    ind_G1    = find(true_labs==3);
+    ind_G2M_6 = ind_G1(ii_mat(j,:));
+    ind_G1    = find(true_labs==1);
+    idx       = [ind_G1;ind_G2M_6];
+    X         = in_X(idx,:);
     %%% Retain most variable genes across samples
-    v = var(X);
-    [b,ib] = sort(v,'descend');
+    v          = var(X);
+    [b,ib]     = sort(v,'descend');
     diff_genes = ib(1:num_genes(k));
-    Xt = X';
-    X_ts = Xt(diff_genes,:); 
+    X_ts       = X(:,diff_genes); 
     %%%
     
-        for i = 1:65
-            outliers = outliers_boxplot(X_ts(:,i)); 
+        for i = 1:size(X_ts,1)
+            outliers = outliers_boxplot(X_ts(i,:)); 
             Num_out(i,j) = length(outliers);
         end
     % Find number of false positives before detecting all known outliers
@@ -221,7 +210,6 @@ for k = 6:8
     fprintf('dataset number = %d, number of genes = %d \n',j,num_genes(k))
     end
 end   
-time = toc;
 
 %% Plot
 

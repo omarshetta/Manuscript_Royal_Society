@@ -1,13 +1,16 @@
-%%% This code uses GSPBOX for graph construction. DO NOT FORGET to download GSPBOX! as described in the READ_ME file.
+%%% This code uses GSPBOX for graph construction. DO NOT FORGET to download GSPBOX! as described in the READ_ME file in parent directory.  
 
 % Initialize gspbox library and add path for functions used in this script
+clc
 clear all
+cd ..
 addpath('./gspbox/');
 addpath('./fast_kmeans')
 addpath('./utils')
 gsp_start;
-
+cd Single_Cell_Dataset
 % Load single cell dataset
+disp(['Loading Single Cell Data... '])
 load('Test_1_mECS.mat')
 X = in_X;
 
@@ -16,42 +19,40 @@ for i = 1:max(unique(true_labs))
 p(i) = length(find(true_labs==i));
 end
 
-% Initializing relevant output variables
-load('ii_mat2.mat')
-r_gop = zeros(30,1);
-r_op = zeros(30,1);
+load('ind_outliers.mat')% load indexes of the 6 sampled G2M cells for all 30 datasets.
 
-perf_GOP = zeros(30,2);
-perf_OP = zeros(30,2);
-perf_PCA = zeros(30,2);
+% Initializing relevant output variables
+r_gop = zeros(30,1);
+r_op  = zeros(30,1);
+
+perf_GOP  = zeros(30,2);
+perf_OP   = zeros(30,2);
+perf_PCA  = zeros(30,2);
 perf_tsne = zeros(30,2);
 
-separ_GOP = zeros(30,1);
-separ_PCA = zeros(30,1);
-separ_OP = zeros(30,1);
+separ_GOP  = zeros(30,1);
+separ_PCA  = zeros(30,1);
+separ_OP   = zeros(30,1);
 separ_tsne = zeros(30,1);
 
-F_PCA = zeros(30,1);
-F_GOP = zeros(30,1);
-F_OP = zeros(30,1);
+F_PCA  = zeros(30,1);
+F_GOP  = zeros(30,1);
+F_OP   = zeros(30,1);
 F_tsne = zeros(30,1);
 
 %%
 for j = 1:30
-
-%%% Sampling 6 cells from G2M population    
-ind = find(true_labs==3);
-iii = ind(ii_mat(j,:));
-iii2 = find(true_labs==1);
-%%%
-%%% Constructing dataset with 6 G2M cells and 59 G1 cells
-idx = [iii2;iii];
-X = in_X(idx,:);
+%%% Constructing dataset with 6 G2M cells and 59 G1 cells 
+ind_G2M   = find(true_labs==3);
+ind_G2M_6 = ind_G2M(ii_mat(j,:));
+ind_G1    = find(true_labs==1);
+idx       = [ind_G1;ind_G2M_6];
+X         = in_X(idx,:);
 %%%
 %%% Retain most variable genes across samples
-v = var(X);
+v      = var(X);
 [b,ib] = sort(v,'descend');
-M = X(:,ib(1:1000));
+M      = X(:,ib(1:1000));
 %%%
 
 %%% Build k-Nearest Neighbours graph
@@ -64,8 +65,8 @@ G1 = gsp_nn_graph(M,param_graph);
 
 %%% GOP
 [L,C,obj] = admm_algo_OP_on_graphs(M',1.6,2,full(G1.L)); % GOP algorithm
-[U,~,~] = svd(L);
-r_gop(j) = rank(L);
+[U,~,~]   = svd(L);
+r_gop(j)  = rank(L);
 Z_GOP = U(:,1:r_gop(j))'*L;
 [ cent_Z, pred_Z, ~, ~, ~] = kmeans_fast(Z_GOP', 2, 2, 0);
 out_Z = find(pred_Z==2);
@@ -123,9 +124,9 @@ end
 
 %% F score 
 for i = 1:30
-TP = perf_PCA(i,1);
-FP = perf_PCA(i,2);
-Rec = TP/5;
+TP   = perf_PCA(i,1);
+FP   = perf_PCA(i,2);
+Rec  = TP/5;
 Prec = TP/(TP+FP);
 F_PCA(i) = 2*(Rec * Prec)/( Rec + Prec);
 end
@@ -178,15 +179,12 @@ title('F-Score Single Cell Dataset')
  
 j = 10; % choosing index of specific dataset
 
-%%% Sampling 6 cells from G2M population    
-ind = find(true_labs==3);
-iii = ind(ii_mat(j,:));
-iii2 = find(true_labs==1);
-%%%
 %%% Constructing dataset with 6 G2M cells and 59 G1 cells
-idx = [iii2;iii];
+ind_G2M = find(true_labs==3);
+ind_G2M_6 = ind_G2M(ii_mat(j,:));
+ind_G1 = find(true_labs==1);
+idx = [ind_G1;ind_G2M_6];
 X = in_X(idx,:);
-labs = true_labs(idx);
 %%%
 %%% Retain most variable genes across samples
 v = var(X);
