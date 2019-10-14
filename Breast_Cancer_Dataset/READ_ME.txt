@@ -4,4 +4,4 @@ Run 'Outlier_Detection_using_C_matrix.m' to compare GOP, OP, Gaussian density me
 
 Run 'F_Score_Separability_and_Visualization.m'  to compare F score, Separability and visualization of GOP, OP, PCA and t-SNE. 
 
-BEFORE RUNNING THESE SCRIPTS, PLEASE donwload TCGA Breast cancer dataset following instructions in 'Download Breast cancer TCGA dataset.txt'. 
+BEFORE RUNNING THESE SCRIPTS, PLEASE download TCGA Breast cancer dataset following instructions in 'Download Breast cancer TCGA dataset.txt'. 

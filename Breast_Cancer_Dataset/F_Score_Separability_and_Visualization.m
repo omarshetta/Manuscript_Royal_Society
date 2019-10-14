@@ -1,6 +1,4 @@
-%%% This code uses GSPBOX for graph construction. PLEASE DO NOT FORGET to download GSPBOX! as described in the READ_ME file in parent directory.
-
-%%% Download breast cancer TCGA dataset from Xena browser following
+%%% PLEASE DOWNLOAD breast cancer TCGA dataset from Xena browser following
 %%% instructions in 'Download Breast cancer TCGA dataset.txt' file. Download file then convert to
 %%% excel and rename as 'BRCA_TCGA.xlsx'
 clc
@@ -10,12 +8,10 @@ disp(['Loading Breast Cancer Dataset...'])
 id_sequed = text2(1,2:end);
 
 
-% Initialize gspbox library and add path for functions used in this script
+% Add paths for functions used in this script
 cd ..
 addpath('./fast_kmeans/');
 addpath('./utils')
-addpath('./gspbox/');
-gsp_start;
 cd Breast_Cancer_Dataset
 
 % Load BRCA clinical data, find ER+ and ER- patients 
@@ -75,19 +71,13 @@ X_ts       = X_tst(diff_genes,:);
 %Quantile normalize dataset
 qq_var = quantilenorm(X_ts);
 
-% Set k-Nearest Neighbour graph parameters. Check GSPBOX documentation for more details
-param_graph.use_flann = 0; % to use the fast C++ library for construction of huge graphs.
-param_graph.k = 5; % setting k=5
-param_graph.type = 'knn'; % specifying type of graph
 
-% Find W (square and symmetric similarity matrix) and find Laplacian matrix
-G = gsp_nn_graph(qq_var',param_graph); % create k-NN graph
-w = full(G.W);
-d = sum(w,2);
-D = diag(d);
-Lap_graph = D-w;
+%%% Build K-Nearest Neighbours graph.
+K=5;
+[Lap, ~] = build_knn_graph(qq_var',K); % returns graph Laplacian matrix.
+%%%
 
-[L_hat2,C_hat2,obj] = admm_algo_OP_on_graphs(qq_var, 0.84, 1, Lap_graph); % GOP algorithm 
+[L_hat2,C_hat2,obj] = admm_algo_OP_on_graphs(qq_var, 0.84, 1, Lap); % GOP algorithm 
 r2(j) = rank(L_hat2);
 
 % Project L_hat onto its first r2(j) principal directions.
@@ -214,7 +204,7 @@ title('F score Breast Cancer Dataset')
 %% Visualization of GOP, OP, PCA and t-SNE.
 
 j = 10;
-X_tst = [ X(:,ind_pos(i_pos)) , X(:,ind_neg(ind_mat1(j,:))) ]; % constructiong 100 ER+ and 5 ER- dataset.
+X_tst = [ X(:,ind_pos(i_pos)) , X(:,ind_neg(ind_mat1(j,:))) ]; % constructing 100 ER+ and 5 ER- dataset.
 
 %%% Retain 200 most variable genes
 v          = var(X_tst,0,2);
@@ -224,20 +214,12 @@ X_ts       = X_tst(diff_genes,:);
 
 qq_var = quantilenorm(X_ts);% Quantile normalize
 
-%%% Initlilze k-Nearest Neighbour graph
-param_graph.use_flann = 0;
-param_graph.k = 5; 
-param_graph.type='knn';
-
+% Build K-Nearest Neighbours graph.
+K=5;
+[Lap, ~] = build_knn_graph(qq_var',K); % returns graph Laplacian matrix.
+%
 
 Pos = 101:105;
-
-% Find W (square and symmetric similarity matrix) and find Laplacian matrix
-G = gsp_nn_graph(qq_var',param_graph);
-w = full(G.W);
-d = sum(w,2);
-D = diag(d);
-Lap_graph = D-w;
 
 %%% OP
 [L_hat, C_hat, cnt] = OUTLIER_PERSUIT(qq_var, 0.40);
@@ -254,7 +236,7 @@ ylabel('PC2')
 legend('ER+','ER-')
 
 %%% GOP
-[L_hat2, C_hat2, obj]=admm_algo_OP_on_graphs(qq_var, 0.84, 1, Lap_graph);
+[L_hat2, C_hat2, obj]=admm_algo_OP_on_graphs(qq_var, 0.84, 1, Lap);
 r2 = rank(L_hat2);
 [U2, S2, V2] = svd(L_hat2);
 Z_GOP = U2(:,1:r2)'*L_hat2;

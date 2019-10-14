@@ -3,6 +3,3 @@ Manuscript sent for review to Royal Society Open Science. "Robust Subspace Metho
  
  contact: os10g13@soton.ac.uk for any queries or to report bugs.
 
-VERY IMPORTANT: PLEASE download and install the following open source toolbox. The codes rely on this
-GSPBOX: https://lts2.epfl.ch/gsp/
-After downloading unzip and copy 'gspbox' folder to this directory.

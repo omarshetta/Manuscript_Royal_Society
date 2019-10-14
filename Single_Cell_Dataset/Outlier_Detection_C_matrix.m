@@ -1,13 +1,9 @@
-%%% This code uses GSPBOX for graph construction. DO NOT FORGET to download GSPBOX! as described in the READ_ME file in parent directory.
 
-
-% Initialize gspbox library and add path for functions used in this script
+% Add paths for functions used in this script
 clc
 clear all
 cd ..
-addpath('./gspbox/');
 addpath('./utils')
-gsp_start;
 cd Single_Cell_Dataset
 % Load single cell dataset
 disp(['Loading Single Cell Data... '])
@@ -91,26 +87,18 @@ for k = 1:numel(num_genes)
         X_ts       = X(:,diff_genes);
         %%%
         
-        % Initialize k-Nearest Neighbour graph using gspbox functions
-        param_graph.use_flann = 0; % to use the fast C++ library for construction of huge graphs.
-        param_graph.k = 3; % choosing value of k
-        param_graph.type = 'knn'; % specifying type of graph
-
-      
-        % Find W (square and symmetric similarity matrix) and find Laplacian matrix
-        [G,sigma2] = gsp_nn_graph(X_ts,param_graph);
-        w = full(G.W);
-        d = sum(w,2);
-        D = diag(d);
-        Lap_graph = D-w;
-
+        % Build k-Nearest Neighbours graph.
+        K=3;
+        [Lap, ~] = build_knn_graph(X_ts,K); % returns graph Laplacian matrix.
+        
+        
         if(k==1)
             lambda_opg = 0.35;  
         else
             lambda_opg = 0.70;            
         end
             
-        [L, C, obj] = admm_algo_OP_on_graphs(X_ts', lambda_opg, 1, Lap_graph); % GOP algorithm
+        [L, C, obj] = admm_algo_OP_on_graphs(X_ts', lambda_opg, 1, Lap); % GOP algorithm
         r_OPG(j,k) = rank(L);
         % Find number of false positives before detecting all known outliers
         c_OPG = sqrt(sum(C.^2));

@@ -1,13 +1,10 @@
-%%% This code uses GSPBOX for graph construction. DO NOT FORGET to download GSPBOX! as described in the READ_ME file in parent directory.  
 
-% Initialize gspbox library and add path for functions used in this script
+% Add paths for functions used in this script
 clc
 clear all
 cd ..
-addpath('./gspbox/');
 addpath('./fast_kmeans')
 addpath('./utils')
-gsp_start;
 cd Single_Cell_Dataset
 % Load single cell dataset
 disp(['Loading Single Cell Data... '])
@@ -55,16 +52,13 @@ v      = var(X);
 M      = X(:,ib(1:1000));
 %%%
 
-%%% Build k-Nearest Neighbours graph
-param_graph.use_flann = 0;
-param_graph.k = 5;  
-param_graph.type = 'knn';
-G1 = gsp_nn_graph(M,param_graph);
+%%% Build K-Nearest Neighbours graph.
+K=5;
+[Lap, ~] = build_knn_graph(M,K); % returns graph Laplacian matrix.
 %%%
 
-
 %%% GOP
-[L,C,obj] = admm_algo_OP_on_graphs(M',1.6,2,full(G1.L)); % GOP algorithm
+[L,C,obj] = admm_algo_OP_on_graphs(M',1.6,2,Lap); % GOP algorithm
 [U,~,~]   = svd(L);
 r_gop(j)  = rank(L);
 Z_GOP = U(:,1:r_gop(j))'*L;
@@ -122,7 +116,7 @@ separ_tsne(j) = sqrt(a'*inv(C)*a);
 
 end
 
-%% F score 
+%% Compute F score 
 for i = 1:30
 TP   = perf_PCA(i,1);
 FP   = perf_PCA(i,2);
@@ -205,14 +199,12 @@ legend('G1','G2M')
 
 %%% GOP
 
-%%% Build k-Nearest Neighbours graph
-param_graph.use_flann = 0;
-param_graph.k = 5;  
-param_graph.type = 'knn';
-G1 = gsp_nn_graph(M,param_graph);
+%%% Build K-Nearest Neighbours graph.
+K=5;
+[Lap, ~] = build_knn_graph(M,K); % returns graph Laplacian matrix.
 %%%
 
-[L, C, obj] = admm_algo_OP_on_graphs(M', 1.6, 2, full(G1.L)); % GOP algorithm
+[L, C, obj] = admm_algo_OP_on_graphs(M', 1.6, 2, Lap); % GOP algorithm
 [U,~,~] = svd(L);
 r = rank(L);
 Z = U(:,1:r)'*L;

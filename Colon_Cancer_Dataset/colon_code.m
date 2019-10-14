@@ -1,15 +1,11 @@
-%%% This code uses GSPBOX for graph construction. PLEASE DO NOT FORGET to download GSPBOX! as described in the READ_ME file in parent directory.
-
 %% Preparing data and adding relevant paths.
 clc
-% Initialize gspbox library and add path for functions used in this script
+% Add paths for functions used in this script
 clear all
 cd ..
 addpath('./fast_kmeans/');
-addpath('./gspbox/');
 addpath('./utils')
 cd Colon_Cancer_Dataset
-gsp_start;
 
 % Load colon cancer data. Use only tumor samples.
 load('colon.mat')
@@ -94,16 +90,10 @@ end
 
  %%  Graph regualrized Outlier Pursuit (GOP)
 
-%  Set k-Nearest Neighbour graph parameters. Check GSPBOX documentation for more details 
-param_graph.use_flann = 0; % to use the fast C++ library for construction of huge graphs.
-param_graph.k = 5;
-param_graph.type = 'knn';   
-G1 = gsp_nn_graph(M_new',param_graph); % construct graph
-
-% Calculate Laplacian matrix
-w = full(G1.W);
-d = sum(w,2);
-Lap_graph = diag(d)-w;
+%%% Build K-Nearest Neighbours graph.
+K=5;
+[Lap, ~] = build_knn_graph(M_new',K); % returns graph Laplacian matrix.
+%%%
 
 %% Tune lambda for GOP. Using grid search method
 
@@ -114,7 +104,7 @@ index_outliers_gr   = zeros(40,n);
 num_outliers_gr     = zeros(1,n);
 
 for i = 1:n
-[L_hat2, C_hat2, obj] = admm_algo_OP_on_graphs(M_new, lambda_vec(i), 1, Lap_graph);% GOP algorithm
+[L_hat2, C_hat2, obj] = admm_algo_OP_on_graphs(M_new, lambda_vec(i), 1, Lap);% GOP algorithm
 r_gop(i) = rank(L_hat2);
 
 % Project L_hat2 onto first r_gop(i) principal directions.
@@ -148,7 +138,7 @@ index_outliers2   = zeros(40,n);
 num_outliers2     = zeros(1,n);
 
 for i = 1:n
-[L_hat2, C_hat2, obj] = admm_algo_OP_on_graphs(M_new, 1.1875, gamma_vec(i), Lap_graph); % 1.1875 is optimal lambda
+[L_hat2, C_hat2, obj] = admm_algo_OP_on_graphs(M_new, 1.1875, gamma_vec(i), Lap); % 1.1875 is optimal lambda
 [~, predicted_labels2(:,i), ~, ~, ~] = kmeans_fast(L_hat2', 2, 2, 0);
 r(i) = rank(L_hat2);
 ind_outliers2 = find(predicted_labels2(:,i)==2);
@@ -170,7 +160,7 @@ title('Robustness of GOP to \gamma')
 
 
  %% Using column sparse matrix to find outliers
-[L_hat2, C_hat2, obj] = admm_algo_OP_on_graphs(M_new, 1.1875, 1, Lap_graph); 
+[L_hat2, C_hat2, obj] = admm_algo_OP_on_graphs(M_new, 1.1875, 1, Lap); 
 c_hat_norms2 = sqrt(sum(C_hat2.^2)).^2;
 
 figure (7)

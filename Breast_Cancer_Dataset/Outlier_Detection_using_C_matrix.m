@@ -1,6 +1,4 @@
-%%% This code uses GSPBOX for graph construction. PLEASE DO NOT FORGET to download GSPBOX! as described in the READ_ME file in parent directory.
-
-%%% Download breast cancer TCGA dataset from Xena browser following
+%%% PLEASE DOWNLOAD breast cancer TCGA dataset from Xena browser following
 %%% instructions in 'Download Breast cancer TCGA dataset.txt' file. Download file then convert to
 %%% excel and rename as 'BRCA_TCGA.xlsx'
 clc
@@ -9,11 +7,9 @@ disp(['Loading Breast Cancer Dataset...'])
 [breast_TCGA,text] = xlsread('BRCA_TCGA.xlsx'); % load dataset
 id_sequed = text(1,2:end);
 
-% Initialize gspbox library and add path for functions used in this script
+% Add paths for functions used in this script
 cd ..
-addpath('./gspbox/');
 addpath('./utils')
-gsp_start;
 cd Breast_Cancer_Dataset
 
 % Load BRCA clinical data, find ER+ and ER- patients 
@@ -100,22 +96,13 @@ FP_OP_test  = zeros(30,n);
         diff_genes = iv(1:num_dim(k));
         X_ts       = X_tst(diff_genes,:);
         M          = quantilenorm(X_ts);
-        
-        % Set k-Nearest Neighbour graph parameters. Check GSPBOX documentation for more details
-        param_graph.use_flann = 0; % to use the fast C++ library for construction of huge graphs.
-        param_graph.k = 5; % specifying the value of k
-        param_graph.type = 'knn'; % specifying type of graph
-        %%%
-        
-        % Find W (square and symmetric similarity matrix) and find Laplacian matrix
-        [G,sigma2] = gsp_nn_graph(M',param_graph); % create k-NN graph
-        w = full(G.W);
-        d = sum(w,2);
-        D = diag(d);
-        Lap_graph = D-w;
 
-       
-       [L_hat2, C_hat2] = admm_algo_OP_on_graphs(M, 0.70, 1, Lap_graph); % GOP algorithm 
+        %%% Build K-Nearest Neighbours graph.
+        K=5;
+        [Lap, ~] = build_knn_graph(M',K); % returns graph Laplacian matrix.
+        %%%
+    
+       [L_hat2, C_hat2] = admm_algo_OP_on_graphs(M, 0.70, 1, Lap); % GOP algorithm 
        r_opg(j,k) = rank(L_hat2);
        
        % Find number of False positives detected to find all 5 known outliers
